@@ -14,7 +14,7 @@
 
 <div class="container">
     <div class="row">
-        <div class="col-md-10 col-lg-8 mx-lg-auto mx-md-auto">
+        <div class="col-md-15 col-lg-10 mx-lg-auto mx-md-auto">
 
             <h1 class="pt-5 pb-2">Survey 2</h1>
 
@@ -23,10 +23,10 @@
             {% for question in questions %}
 
                 {{ form[question].label }}
-                {% if "radio" in "~form[question].label" %}
+                {% if "{}".format(form[question].label).find("radio") > -1 %}
                     {% for subfield in form[question] %}
                     <tr>
-                        <td>{{ subfield }}</td>
+                        <td>{{ subfield(class="inline-radio") }}</td>
                         <td>{{ subfield.label }}</td>
                     </tr>
                     {% endfor %}
