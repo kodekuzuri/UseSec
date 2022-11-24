@@ -1,14 +1,19 @@
 from flask import Flask, render_template, redirect, url_for
 from flask_bootstrap import Bootstrap
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, BooleanField, RadioField, IntegerField, FormField, FieldList
+from wtforms import StringField, SubmitField, BooleanField, RadioField, IntegerField, FormField, FieldList, SelectField, SelectMultipleField
 from wtforms.validators import DataRequired
+from wtforms import widgets
 
 
 class ConsentForm(FlaskForm):
     accept = RadioField("Please indicate consent before proceeding", choices=[
                         ('Yes', 'I consent'), ('No', 'I do not consent')], validators=[DataRequired()])
     submit = SubmitField('Submit')
+
+class MCQ(SelectMultipleField):
+    widget = widgets.ListWidget(prefix_label=False)
+    option_widget = widgets.CheckboxInput()
 
 
 def create_form(questions):
@@ -25,6 +30,9 @@ def create_form(questions):
                 value["question"], validators=[DataRequired()]))
         elif value["response_type"] == "radio":
             setattr(SurveyForm, key, RadioField(
+                value["question"], choices=value["options"], validators=[DataRequired()]))
+        elif value["response_type"] == "checkbox":
+            setattr(SurveyForm, key, MCQ(
                 value["question"], choices=value["options"], validators=[DataRequired()]))
         fields.append(key)
     setattr(SurveyForm, "submit", SubmitField('Submit'))

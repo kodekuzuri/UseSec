@@ -28,8 +28,12 @@ questions = {
         "question": "How comfortable are you with the following?",
         "response_type": "radio",
         "options": ["Very comfortable", "Somewhat comfortable", "Not comfortable"],
-    }
-
+    },
+    "radio4": {
+        "question": "What are your hobbies?",
+        "response_type": "checkbox",
+        "options": ["Reading", "Writing", "Coding", "Gaming", "Sports"],
+    },
 }
 
 
@@ -45,7 +49,7 @@ app.config['SECRET_KEY'] = 'C2HWGVoMGfNTBsrYQg8EcMrdTimkZfAb'
 Bootstrap(app)
 
 
-@app.route("/home", methods=['GET', 'POST'])
+@app.route("/", methods=['GET', 'POST'])
 def home():
     return render_template("home.html", name="Parth", date="12/12/2019")
 
@@ -60,7 +64,7 @@ def varfunc(name):
     return 'Hello %s, Adios !' % name
 
 
-@app.route('/<id>', methods=['GET', 'POST'])
+@app.route('/survey/<id>', methods=['GET', 'POST'])
 def index(id):
     name = users[id]
     form = ConsentForm()
@@ -75,7 +79,8 @@ def index(id):
 
 @app.route("/survey2/<id>", methods=['GET', 'POST'])
 def survey2(id):
-    # questions = create_questions(id)
+    if (request.method == 'POST'):
+        return redirect(url_for('varfunc', name=users[id]))
     form, fields = create_form(questions=questions)
     return render_template('survey2.html', form=form, questions=fields)
 

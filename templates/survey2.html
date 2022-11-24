@@ -21,7 +21,6 @@
             <p class="lead">Lorem Ipsum</p>
 
             {% for question in questions %}
-
                 {{ form[question].label }}
                 {% if "{}".format(form[question].label).find("radio") > -1 %}
                     {% for subfield in form[question] %}
