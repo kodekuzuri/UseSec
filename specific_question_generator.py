@@ -3,15 +3,17 @@ from extractor import generate_csv
 from datetime import datetime
 import csv
 import random
-
+from zipfile import ZipFile 
 def clean_format(l):
     l[1] = float(l[1])
     l[3] = int(float(l[3]))
     return l
 
 def generate_qs(user_id):
+    with ZipFile("zips/" + user_id + ".zip") as obese:
+        obese.extractall("folder" + user_id)
     output_file = "data_folder_local/outputs/"+user_id+".csv"
-    generate_csv("data_folder_local/inputs/activity_1.html",output_file)
+    generate_csv("folder" + user_id + "/Takeout/Google Pay/My Activity/My Activity.html",output_file)
     blocks = ["Large", "Small", "DT", "E-commerce","Food-Joints","Food","Travel","Bill","Individuals"]
     final_trans = [""]*9
     with open(output_file,mode = 'r') as file :
@@ -56,8 +58,8 @@ def generate_qs(user_id):
             transaction_data.remove(a)
             present.append(2)
     # random selection part
+    print(final_trans)
 
+    return present, final_trans
     
 
-
-generate_qs("1")

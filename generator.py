@@ -482,19 +482,6 @@ receiver_bill_list = [
 
 receiver_bill_compulsory_list = []
 
-mapper = {
-    0 : (amount_list, amount_compulsory_list),
-    1 : (date_and_time_list, date_and_time_compulsory_list),
-    2 : (group_expenses_list, group_expenses_compulsory_list),
-    3 : (voucher_data_list, voucher_data_compulsory_list),
-    4 : (receiver_individual_list, receiver_individual_compulsory_list),
-    5 : (receiver_ecommerce_list, receiver_ecommerce_compulsory_list),
-    6 : (receiver_food_list, receiver_food_compulsory_list),
-    7 : (receiver_food_del_list, receiver_food_del_compulsory_list),
-    8 : (receiver_travel_list, receiver_travel_compulsory_list),
-    9 : (receiver_bill_list, receiver_bill_compulsory_list),
-   10 : (amount_list, amount_compulsory_list)
-}
 
 N = 15
 
@@ -542,7 +529,6 @@ def modify_list(question_list):
     transmission_index = 0 
     transmission_principle = ""
     receiver = ""
-
 
     for q in question_list:
         N = len(q)
@@ -615,12 +601,28 @@ def modify_map(mapper):
     return mapper
 
 def func(typelist):
+    mapper = {
+        0 : (amount_list, amount_compulsory_list),
+        2 : (date_and_time_list, date_and_time_compulsory_list),
+        9 : (group_expenses_list, group_expenses_compulsory_list),
+        10 : (voucher_data_list, voucher_data_compulsory_list),
+        8 : (receiver_individual_list, receiver_individual_compulsory_list),
+        3 : (receiver_ecommerce_list, receiver_ecommerce_compulsory_list),
+        4 : (receiver_food_list, receiver_food_compulsory_list),
+        5 : (receiver_food_del_list, receiver_food_del_compulsory_list),
+        6 : (receiver_travel_list, receiver_travel_compulsory_list),
+        7 : (receiver_bill_list, receiver_bill_compulsory_list),
+        1 : (amount_list, amount_compulsory_list)
+    }
+
+    mapper = modify_map(mapper)
     res = []
 
-    if(len(typelist)>3):
-        return
-    
+    # if(len(typelist)>4):
+    #     return
     for t in typelist:
+
+
         if t == None:
             continue
 
@@ -629,44 +631,33 @@ def func(typelist):
             k = len(tup[1])
             rand_num = N - k 
             max_q_size = len(tup[0])
-
-            for questions in tup[0]:
-                res.append(questions)
-
             indices = random.sample(range(0, max_q_size-1), rand_num)
 
+            for q in tup[1]:
+                res.append(q)
+
             for i in indices:
-                res.append(tup[1][i])            
-    
+                res.append(tup[0][i])
+
         
+                
         else:
             print("Error, incorrect type returned\n")
             return []
 
 
+        
     attention_check_question = "" 
     
     random.shuffle(res)
+    
     attention_check_question = res[0]
-    attention_check_question[0] = attention_check_question[0][:4] + "un" + attention_check_question[0][4:]
-    res.append(attention_check_question)
+    
+    rr = attention_check_question[0][:4] + "un" + attention_check_question[0][4:]
+    new_tuple = (rr, attention_check_question[1], attention_check_question[2])
+    res.append(new_tuple)
     
     return res
 
 
-modify_map(mapper)
 
-'''
-for key, tup in mapper.items():
-    for q in tup[0]:
-        print(q[0])
-        print(q[1])
-        print(q[2])
-        print("\n\n***************************************************\n\n")
-    print("\n\n----------------------------------------------------------------\n\n")   
-    for q in tup[1]:
-        print(q[0])
-        print(q[1])
-        print(q[2])
-        print("\n\n***************************************************\n\n")
-'''

@@ -7,6 +7,13 @@ from flask import request
 from hashlib import md5 as hash_fn
 #from quickform import QuickForm
 from wtforms import StringField, SubmitField, BooleanField, RadioField
+from downloader import download_file_from_google_drive
+
+
+from  specific_question_generator import *
+from  generator import *
+from  specific_survey import *
+
 
 users = {}
 user_list = ['Parth Jindal', 'Neha Dalmia', 'Suhas Jain',
@@ -500,10 +507,38 @@ def varfunc(name):
     return 'Hello %s, Adios !' % name
 
 @app.route("/gateway/<name>", methods = ['GET', 'POST'])
-def inbetween(name):
+def inbetween(id):
     if request.method == 'POST':
         data = request.form["Question"]
+        file_id = parselink(data)
+        download_file_from_google_drive(file_id, "zips/"+file_id+".zip")
         redirect(url_for('inbetween', name = "abc",drivelink = data, id = parselink(data)))
+        indices, trans = generate_qs(file_id)
+        final_qs = {}
+        
+        ctr = 0 
+        
+        for ind in range(0,len(indices)):
+            if(trans[ind] == ""):
+                continue
+            question_set = func([indices[ind]])
+            questions_formatted = generate_q_list(question_set, trans[ind])
+
+            for key, val in questions_formatted.items():
+
+                new_key = "q-" + str(indices[ind]) + "-" + key[1:]
+                final_qs[new_key] = val
+
+        for key,val in final_qs.items():
+            print(key)
+            print(val)
+            print("*************************************************\n")   
+
+
+        redirect(url_for('specific survey', params = final_qs, id = id)) 
+        
+
+
     return render_template('guide.html', ) #, first_sentence = "This is meant to be a guide for %s made by pranav\n" % name)
 
 
@@ -527,19 +562,22 @@ def index(id):
 @app.route("/survey2/<id>", methods=['GET', 'POST'])
 def survey2(id):
     if (request.method == 'POST'):
-        return redirect(url_for('inbetween', name=users[id]))
+        return redirect(url_for('inbetween', id=users[id]))
     form, fields = create_form(questions=questions)
     return render_template('survey2.html', form=form, questions=fields)
 
 
 @app.route("/survey3/<id>", methods = ['GET', 'POST'])
-def specific_survey(id):
+def specific_survey(params, id):
     name = users[id]
     #specific_survey_questions = generate_q_list()
     specific_survey_questions = {}
     if (request.method == 'POST'):
             return redirect(url_for('varfunc2',name = name))
     form, fields = create_form(questions = specific_survey_questions)
+
+    
+
     return render_template('specific_survey.html', form=form, name=fields)
 
 
