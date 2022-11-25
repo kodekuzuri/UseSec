@@ -71,7 +71,7 @@ def convert_to_csv(input_path, output_path):
         df['transaction_category'] = df['second_party'].apply(fuzz_m)
         df.to_csv(output_path, index=False)
 
-def generate_csv(input_path, userid):
-    convert_to_csv(input_path,"data_folder_local/outputs/"+userid+".csv")
+def generate_csv(input_path, output_path):
+    convert_to_csv(input_path,output_path)
     print("done")
 

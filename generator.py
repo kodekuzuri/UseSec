@@ -1,4 +1,8 @@
 import random
+import nltk
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+
 amount_list = [
 "How comfortable will you be if the AMOUNT in the transaction shown is sent to Google Ads ?",
 "How comfortable will you be if the AMOUNT in the transaction shown is sent to Google Ads and it is deleted automatically after 15 days?",
@@ -495,8 +499,9 @@ mapper = {
 N = 15
 
 def modify_list(question_list):
+    """
     res = []
-    offset = 5
+    offset = 8
     for q in question_list:
         #print(type(q.find("send to")))
         #print()
@@ -528,7 +533,77 @@ def modify_list(question_list):
         res_ele = (q, receiver, tpp)
         res.append(res_ele)
 
-    return res
+        """
+
+    ans = []
+    receiver_offset = 0
+    transmission_offset = 0 
+    receiver_index = 0 
+    transmission_index = 0 
+    transmission_principle = ""
+    receiver = ""
+
+
+    for q in question_list:
+        N = len(q)
+        """
+        transmission priniciple retrieval 
+        """
+        transmission_index = q.find("used to")
+        transmission_offset = len("used to ")
+
+        if (transmission_index==-1):
+            transmission_index = q.find("used for")
+            transmission_offset = len("used for ")
+
+        if(transmission_index==-1):
+            transmission_index = q.find("deleted")
+            transmission_offset = len("deleted ")
+
+
+        """
+        receiver retrieval
+        """
+        receiver_index = q.find("sent to")
+        receiver_offset = len("sent to ")
+    
+        if(receiver_index ==- 1):
+            receiver_index = q.find("leaked")
+            receiver_offset = len("leaked ")
+
+        if(receiver_index == -1):
+            receiver_index = q.find("sent to")
+            receiver_offset = len("sent to ") 
+
+        stop_words = set(stopwords.words('english'))
+
+        if (receiver_index != -1): 
+            receiver = q[receiver_index + receiver_offset : transmission_index]
+            temp = word_tokenize(receiver)
+            filtered_sentence  = []
+
+            for w in temp:
+                if w not in stop_words:
+                    filtered_sentence.append(w)
+
+            receiver = " ".join(filtered_sentence)
+
+
+        if (transmission_index != -1):
+            transmission_principle = q[transmission_index + transmission_offset : N-1]
+            temp = word_tokenize(transmission_principle)
+            filtered_sentence = []
+
+            for w in temp:
+                if w not in stop_words:
+                    filtered_sentence.append(w)
+
+            transmission_principle = " ".join(filtered_sentence)
+
+        res_ele = (q, receiver, transmission_principle)
+        ans.append(res_ele)
+
+    return ans
 
 def modify_map(mapper):
     for key, tup in mapper.items():
@@ -573,7 +648,7 @@ def func(typelist):
     
     random.shuffle(res)
     attention_check_question = res[0]
-    attention_check_question = attention_check_question[:4] + "un" + attention_check_question[4:]
+    attention_check_question[0] = attention_check_question[0][:4] + "un" + attention_check_question[0][4:]
     res.append(attention_check_question)
     
     return res
@@ -581,15 +656,17 @@ def func(typelist):
 
 modify_map(mapper)
 
+'''
 for key, tup in mapper.items():
     for q in tup[0]:
         print(q[0])
         print(q[1])
         print(q[2])
-    print("\n\n")
-    
+        print("\n\n***************************************************\n\n")
+    print("\n\n----------------------------------------------------------------\n\n")   
     for q in tup[1]:
         print(q[0])
         print(q[1])
         print(q[2])
-    print("\n\n_________________________________________________________________\n\n")
+        print("\n\n***************************************************\n\n")
+'''

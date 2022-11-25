@@ -1,7 +1,7 @@
 import csv
 import random
 
-MAX_QUESTIONS = 10
+MAX_QUESTIONS = 15
 
 
 def create_questions(name):

@@ -1,37 +1,33 @@
-zomato, Eating
-swiggy, Eating
-food, Eating
-canteen, Eating
-Dairy, Eating
-Amul, Eating
-Tea, Eating
-cafe, Eating
-Starbucks, Eating
-Donuts, Eating
-Burger, Eating
-sweets, Eating
+zomato, Food
+swiggy, Food
+food, Food-Joints
+canteen, Food-Joints
+Dairy, Food-Joints
+Amul, Food-Joints
+Tea, Food-Joints
+cafe, Food-Joints
+Starbucks, Food-Joints
+Donuts, Food-Joints
+Burger, Food-Joints
+sweets, Food-Joints
 IRCTC, Travel
 Trip, Travel
 Yatra, Travel
-Medico, Health
-Medicine, Health
-Hospital, Health
-Pharmacy, Health
-Uniqlo, Apparel
-Adidas, Apparel
+Uniqlo, E-commerce
+Adidas, E-commerce
 Nike, Apparel
-Razorpay, Bill Payment
-Airtel, Bill Payment
-Jio, Bill Payment
-Voda, Bill Payment
-prepaid, Bill Payment
+Razorpay, Bill
+Airtel, Bill
+Jio, Bill
+Voda, Bill
+prepaid, Bill
 Amazon, E-commerce
 Flipkart, E-commerce
-Netflix, Subscription
-Hotstar, Subscription
-Disney, Subscription
-Zee5, Subscription
-Sony, Subscription
-Voot, Subscription
-Stationery, Supplies
+Netflix, E-commerce
+Hotstar, E-commerce
+Disney, E-commerce
+Zee5, E-commerce
+Sony, E-commerce
+Voot, E-commerce
+Stationery, E-commerce
 
