@@ -5,7 +5,7 @@ from consent import ConsentForm, create_form
 from flask import redirect, url_for
 from flask import request
 from hashlib import md5 as hash_fn
-
+#from quickform import QuickForm
 from wtforms import StringField, SubmitField, BooleanField, RadioField
 
 users = {}
@@ -474,6 +474,11 @@ def hash_users():
         hash_val = hash_val[:8]
         users[hash_val] = user
 
+        
+def parselink(linkstring):
+    arr = linkstring.split('/')
+    
+    return arr[-2]
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'C2HWGVoMGfNTBsrYQg8EcMrdTimkZfAb'
@@ -496,13 +501,10 @@ def varfunc(name):
 
 @app.route("/gateway/<name>", methods = ['GET', 'POST'])
 def inbetween(name):
-    form = QuickForm()
     if request.method == 'POST':
-        if form.is_submitted():
-            pass
-        else:
-            pass
-    return render_template('guide.html') #, first_sentence = "This is meant to be a guide for %s made by pranav\n" % name)
+        data = request.form["Question"]
+        redirect(url_for('inbetween', name = "abc",drivelink = data, id = parselink(data)))
+    return render_template('guide.html', ) #, first_sentence = "This is meant to be a guide for %s made by pranav\n" % name)
 
 
 @app.route("/hello/<name>/final")

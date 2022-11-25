@@ -5,7 +5,7 @@ from wtforms import StringField, SubmitField, BooleanField, RadioField, IntegerF
 from wtforms.validators import DataRequired
 from wtforms import widgets
 
-
+    
 class ConsentForm(FlaskForm):
     accept = RadioField("Please indicate consent before proceeding", choices=[
                         ('Yes', 'I consent'), ('No', 'I do not consent')], validators=[DataRequired()])
