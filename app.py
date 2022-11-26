@@ -1,417 +1,46 @@
 from flask import Flask
 from flask import render_template
 from flask_bootstrap import Bootstrap
-from consent import ConsentForm, create_form
+from consent import ConsentForm, create_form, MCQ
 from flask import redirect, url_for
 from flask import request
 from hashlib import md5 as hash_fn
-#from quickform import QuickForm
 from wtforms import StringField, SubmitField, BooleanField, RadioField
 from downloader import download_file_from_google_drive
-
-
-from  specific_question_generator import *
-from  generator import *
-from  specific_survey import *
-
-
+from questions import questions
+from specific_question_generator import *
+from generator import *
+from specific_survey import *
+import csv
+from flask_login import current_user
 users = {}
+
+
+class User():
+    def __init__(self, name=None, file_id=None):
+        self.name = None
+        self.file_id = None
+
+
 user_list = ['Parth Jindal', 'Neha Dalmia', 'Suhas Jain',
              'Pranav Rajput', 'Rajat Bachawat', 'Animesh Jha']
 
-
-questions = {
-    "q1" : {
-        "question" : "How long have you been using a smartphone?",
-        "response_type": "radio",
-        "options" : ["Around a few months", "Around a year", "Around 2 years", "Around 3 years", "More than 3 years"],
-    },
-    "q2" : {
-        "question": "What operating system do you currently use (to make payments from Google pay)?",
-        "response_type": "radio",
-        "options" : ["Android", "iOS", "Prefer not to Answer"],
-    },
-
-    "q3" : {
-        "question": "Before installing an application on your smartphone, how often do you read the application provider's privacy policy for using the application?",
-        "response_type": "radio",
-        "options" : ["Always", "Sometimes", "Never", "I am not sure"],
-    },
-
-    "q4" : {
-        "question": "What do you usually do when applications ask for permissions after installation?",
-        "response_type": "radio",
-        "options" : ["Almost always deny", "Allow what is required for basic functionality ", "Almost always allow", "I am not sure"],
-    },
-
-    "q5" : {
-        "question": "Which of the following Google applications do you use (utilize at least once a week) in your smartphone? ",
-        "response_type": "checkbox",
-        "options" : ["Chrome Browser", "Google Voice Assistant", "GMail", "Google Calendar", "Google Meet", "Youtube / Youtube Music", "Android Auto", "Google Drive", "Google Office Apps (docs/sheets/slides)", "Google Maps"],
-    },
-
-    "q6" : {
-        "question": "Can you please select what kind of data you consider private on your smartphone?" ,
-        "response_type": "radio",
-        "options" : ["Call records" , "Location", "Photos and videos ", "Names of installed applications", "Documents", "Audio/call recordings", "Browser history"],
-    },
-
-    "q7" : {
-        "question" : "Since how long have you been using Google Pay on your smartphone?",
-        "response_type": "radio",
-        "options" : ["Around a few months", "Around a year", "Around 2 years", "Around 3 years", "More than 3 years"],
-    }, 
-
-    "q8" : {
-        "question" : "How often do you use Google Pay on your smartphone?",
-        "response_type": "radio",
-        "options" : ["A couple of times a day", "Once a day", "A couple of times per week", "Once a week", "A couple of times per month", "A couple of times every 3 months", "Less than once every 3 months"],
-    }, 
-
-    "q9" : {
-        "question" : "Approximately how long ago did you link your bank account to Google Pay?",
-        "response_type": "radio",
-        "options" : ["A few weeks", "A few months", "Around a year", "Around 2 years", "Around 3 years", "More than 3 years"],
-    }, 
-
-    "q10" : {
-        "question" : "[If answered “A couple of times a week” or higher] What qualities of Google Pay encourage you to use it frequently on your smartphone? Select all that apply.",
-        "response_type": "checkbox",
-        "options" : ["Making transactions with it is faster than other modes of payment", "You earn rewards from it", "You find it easy to use", "Others"],
-    },
-
-    "q11" : {
-        "question" : "[If answered lower than “A couple of times a week”] What qualities of Google Pay discourage you to use it frequently on your smartphone? Select all that apply.",
-        "response_type": "checkbox",
-        "options" : ["Making transactions with it is slower than other modes of payment", "You find it difficult to use", "You fear about your privacy" , "You fear about getting scammed online", "Other"],
-    },    
-    
-    "q12" : {
-        "question" : "Which of the following payment apps have you used? Select all that apply.", 
-        "response_type": "checkbox",
-        "options" : ["PhonePe", "PayTM", "Amazon Pay" , "None of These"],
-    },
-
-    "q13" : {
-        "question" : "[If answered anything but “None of these”] Do you prefer using Google Pay over the payment apps that you have used?",
-        "response_type" : "radio",
-        "options" : ["Yes", "No"],
-    },
-
-    "q14" : {
-        "question" : "[If answered “Yes”] Why do you prefer using Google Pay over the other payment apps that you have used? Select all that apply.",
-        "response_type" : "radio",
-        "options" : ["You find Google Pay easier to use", "You find making transactions with Google Pay to be faster", "Payment failure rates are lower on Google Pay", "You prefer using Google apps", "Other"],
-    },
-
-    "q15" : {
-        "question" : "[If answered “No”] Why do you prefer using other payment apps over Google Pay? Select all that apply.",
-        "response_type" : "checkbox",
-        "options" : ["You find Google Pay more difficult to use", "You find making transactions with Google Pay to be slower", "Payment failure rates are higher on Google Pay",
-        "You do not prefer using Google apps", "Other"],
-    },
-
-    "q16" : {
-        "question" : "Which of the following purposes do you use Google Pay for? Select all that apply.",
-        "response_type" : "checkbox",
-        "options" : ["Sending money","Receiving money","Group Expenses","Availing rewards", "Other"],
-    }, 
-
-    "q17" : {
-        "question" : "Among the following, whom do you generally send money to? Select all that apply.",
-        "response_type" : "checkbox",
-        "options" : ["Friends", "Vendors", "E-Commerce Websites or Apps", "Food Delivery Websites or Apps", "Food Delivery Websites or Apps", "Periodically Billed Services (like electricity or mobile network provider)", "Other", "Do not wish to disclose"],
-    },
-
-    "q18" : {
-        "question" : "On average, what range do your transactions via Google Pay lie in?",
-        "response_type" : "checkbox",
-        "options" :  ["Less than Rs. 100", "Rs. 100 to Rs. 1000", "Rs. 1000 to Rs. 10000", "Rs. 10000 to Rs. 50000", "Rs. 50000 or higher", "Do not wish to disclose"],
-    } ,
-
-    "q19" : {
-        "question" : "From which of the following locations do you remember having made transactions using Google Pay? Select all that apply.",
-        "response_type" : "checkbox",
-        "options" : ["Home", "Work", "Shopping Mall", "Restaurant", "Do not wish to disclose"],
-    },
-
-    "q20" : {
-        "question" : "At what times of the day do you usually make transactions using Google Pay? Select all that apply.",
-        "response_type" : "checkbox",
-        "options" : ["Morning (06:00 AM to 12:00 PM)", "Afternoon (12:00 PM to 04:00 PM)", "Evening (04:00 PM to 08:00 PM)", "Night (08:00 PM to 11:00 PM)", "Late Night (11:00 PM to 02:00 AM)", "I do not remember", "Do not wish to disclose"],
-    },
-
-    "q21" : {
-        "question" : "On a scale of 1 to 5, with 1 being the least and 5 being the most, how much do you trust Google that it would not use your data for malicious purposes?",
-        "response_type" : "radio",
-        "options" : ["1", "2", "3", "4", "5"],
-    },
-
-    "q22" : {
-        "question" : "Which of the following do you remember sharing or giving permission for at the time of setting up Google Pay on your smartphone? Select all that apply",
-        "response_type" : "checkbox",
-        "options" : ["Basic personal information (such as name, birthday and phone number)", "Access to your location history", "Bank account details", "Access to your contacts", "Access to your photo gallery"],
-    },
-
-    "q23" : {
-        "question" : "Do you think Google Pay stores the amount of the transaction?",
-        "response_type" : "radio",
-        "options" : ["Yes", "No", "I am not sure"],
-    },
-
-    "q24" : {
-        "question" : "Do you think Google Pay stores the UPI ID of the other party that took part in the transaction?",
-        "response_type" : "radio",
-        "options" : ["Yes", "No", "I am not sure"],
-    },
-    
-    "q25" : {
-        "question" : "Do you think Google Pay stores the bank account number of the other party that took part in the transaction?",
-        "response_type" : "radio",
-        "options" : ["Yes", "No", "I am not sure"],
-    },
-    
-    "q26" : {
-        "question" : "Do you think Google Pay stores the name of the other party that took part in the transaction?",
-        "response_type" : "radio",
-        "options" : ["Yes", "No", "I am not sure"],
-    },
-
-    "q27" : {
-        "question" : "Do you think Google Pay stores the date and time at which the transaction was made?",
-        "response_type" : "radio",
-        "options" : ["Yes", "No", "I am not sure"],
-    },
-
-    "q28" : {
-        "question" : "Do you think Google Pay stores the data about which companies' vouchers (coupons) you have been rewarded?",
-        "response_type" : "radio",
-        "options" : ["Yes", "No", "I am not sure"],
-    },   
-    
-    "q29" : {
-        "question" : "Do you think Google Pay stores the data about which vouchers you have redeemed?",
-        "response_type" : "radio",
-        "options" : ["Yes", "No", "I am not sure"],
-    },    
-    
-    "q30" : {
-        "question" : "Do you think Google Pay stores the data about your group expenses?",
-        "response_type" : "radio",
-        "options" : ["Yes", "No", "I am not sure"],
-    },    
-    
-    "q31" : {
-        "question" : "Do you think Google uses data collected from Google Pay to show you targeted ads?",
-        "response_type" : "radio",
-        "options" : ["Yes", "No", "I am not sure"],
-    },    
-    
-    "q32" : {
-        "question" : "Do you think Google Pay has the ability to make a transaction without your consent?",
-        "response_type" : "radio",
-        "options" : ["Yes", "No", "I am not sure"],
-    },    
-    
-    "q33" : {
-        "question" : "Do you think Google will provide your Google Pay data to a government agency (like Enforcement Directorate/Income Tax Department) if pressured?",
-        "response_type" : "radio",
-        "options" : ["Yes", "No", "I am not sure"],
-    },    
-    
-    "q34" : {
-        "question" : "Do you think there exists an option to automatically delete data stored by a specific Google application after a fixed time?",
-        "response_type" : "radio",
-        "options" : ["Yes", "No", "I am not sure"],
-    },
-
-    "q35" : {
-        "question" : "Do you think Google Pay stores your data indefinitely on its storage facilities (i.e. does not delete it after a fixed time) by default?",
-        "response_type" : "radio",
-        "options" : ["Yes", "No", "I am not sure"],
-    },
-
-    "q36" : {
-        "question" : "Do you think Google Pay uses your data for purposes other than improving its user experience?",
-        "response_type" : "radio",
-        "options" : ["Yes", "No", "I am not sure"],
-    },
-
-    "q37" : {
-        "question" : "Do you think Google removes all personally identifiable information before storing your data in its storage facilities?",
-        "response_type" : "radio",
-        "options" : ["Yes", "No", "I am not sure"],
-    },
-
-    "q38" : {
-        "question" : "I believe Google should be more proactive in notifying the users about the Google Pay data dashboard.",
-        "response_type" : "radio",
-        "options" : ["Very Uncomfortable", "Uncomfortable", "Neutral", "Comfortable", "Very Comfortable"],
-    },
-
-    "q39" : {
-        "question" : "I believe Google should be more proactive in notifying the users exactly what data it collects from Google Pay",
-        "response_type" : "radio",
-        "options" : ["Very Uncomfortable", "Uncomfortable", "Neutral", "Comfortable", "Very Comfortable"],
-    },
-
-    "q40" : {
-        "question" : "I believe Google should be more proactive in notifying the users what purposes the Google Pay data collected from them is used for.",
-        "response_type" : "radio",
-        "options" : ["Very Uncomfortable", "Uncomfortable", "Neutral", "Comfortable", "Very Comfortable"],
-    },
-
-    "q41" : {
-        "question" : "I believe Google should allow me to decide what data about my transactions it collects (if it collects it at all).",
-        "response_type" : "radio",
-        "options" : ["Very Uncomfortable", "Uncomfortable", "Neutral", "Comfortable", "Very Comfortable"],
-    },
-
-    "q42" : {
-        "question" : "I believe Google should allow me to decide what data about my vouchers (coupons), rewards or gift cards it collects (if it collects it at all).",
-        "response_type" : "radio",
-        "options" : ["Very Uncomfortable", "Uncomfortable", "Neutral", "Comfortable", "Very Comfortable"],
-    },
-
-    "q43" : {
-        "question" : "I believe Google should allow me to decide what data about my group expenses on Google Pay it collects (if it collects it at all).",
-        "response_type" : "radio",
-        "options" : ["Very Uncomfortable", "Uncomfortable", "Neutral", "Comfortable", "Very Comfortable"],
-    },
-
-    "q44" : {
-        "question" : "I believe Google should allow managing the data collected by an application in that specific application itself.",
-        "response_type" : "radio",
-        "options" : ["Very Uncomfortable", "Uncomfortable", "Neutral", "Comfortable", "Very Comfortable"],
-    },
-
-    "q45" : {
-        "question" : "I believe there should be an option to automatically delete data older than a certain time period.",
-        "response_type" : "radio",
-        "options" : ["Very Uncomfortable", "Uncomfortable", "Neutral", "Comfortable", "Very Comfortable"],
-    },
-
-    "q46" : {
-        "question" : "I believe Google should collect data primarily to enhance user experience.",
-        "response_type" : "radio",
-        "options" : ["Very Uncomfortable", "Uncomfortable", "Neutral", "Comfortable", "Very Comfortable"],
-    },
-
-    "q47" : {
-        "question" : "I believe there should be an option to delete selected portions of the transaction data I consider to be sensitive.",
-        "response_type" : "radio",
-        "options" : ["Very Uncomfortable", "Uncomfortable", "Neutral", "Comfortable", "Very Comfortable"],
-    },
-
-    "q48" : {
-        "question" : "I believe Google should be more liberal with the data it collects to give a more personalised experience.",
-        "response_type" : "radio",
-        "options" : ["Very Uncomfortable", "Uncomfortable", "Neutral", "Comfortable", "Very Comfortable"],
-    },
-
-    "q49" : {
-        "question" : "I would be okay with Google using my data for any purpose as long as it removes personally identifiable information from the data.",
-        "response_type" : "radio",
-        "options" : ["Very Uncomfortable", "Uncomfortable", "Neutral", "Comfortable", "Very Comfortable"],
-    },
-
-    "q50" : {
-        "question" : "I would be okay with Google using my data for any purpose as long as it does not share it with government agencies or political parties.",
-        "response_type" : "radio",
-        "options" : ["Very Uncomfortable", "Uncomfortable", "Neutral", "Comfortable", "Very Comfortable"],
-    },
-    
-    "q51" : {
-        "question" : "Do you know about Google Data Dashboard?",
-        "response_type": "radio",
-        "options" : ["Yes", "No"],
-    }, 
-   
-    "q52" : {
-        "question" : "[Yes] Which features of the Google Data Dashboard have you utilised?",
-        "response_type" : "radio",
-        "options" : ["Download collected data", "Delete all data", "Delete selected sensitive data", "Change privacy settings", "Other"],
-    },
-
-    "q53" : {
-        "question" : "[No] Do you think you would have benefited if you had known about it earlier?",
-        "response_type" : "radio",
-        "options" : ["Yes", "No"],
-    },
-
-    "q54" : {
-        "question" : "[No] Now that you know about it, which actions are you most likely to perform in the future (for any Google application)?",
-        "response_type" : "radio",
-        "options" : ["Download collected data", "Delete all data", "Delete selected sensitive data", "Change privacy settings", "Other", "Not change anything", "I am not sure"],
-    },
-
-    "q55" : {
-        "question" : "Knowing about the functionality of the personalisation feature, which setting will you like to keep it at?",
-        "response_type" : "radio",
-        "options" : ["On", "Off", "I am not sure"],
-    },
-
-    "q56" : {
-        "question" : "Do you feel that tech companies, in general, tend to make it harder for users to access their collected data?",
-        "response_type" : "radio",
-        "options" : ["Yes", "No", "Maybe"],
-    },
-
-    "q57" : {
-        "question" : "Have you ever gone through Google's privacy policy?",
-        "response_type" : "radio",
-        "options" : ["On", "Off", "I am not sure"],
-    },
-
-    "q58" : {
-        "question" : "On a scale of 1 to 5, with 1 being the least and 5 being the most, how much do you trust Google that it would not use your data for malicious purposes, after participating in this study?",
-        "response_type" : "radio",
-        "options" : ["1", "2", "3", "4", "5"],
-    },
-       
-    "q59" : {
-        "question" : "With what gender do you identify?",
-        "response_type" : "radio",
-        "options" : ["Male", "Female", "Non_Binary", "Prefer not to answer"],
-    },
-
-    "q60" : {
-        "question" : "What is your age?",
-        "response_type" : "radio",
-        "options" : ["Younger than 18", "18-24", "25-34", "35-44", "45-54", "55-64", "64 or older", "I don't know", "Prefer not to say"],
-    },
-
-    "q61" : {
-        "question" : "What is the highest degree or level of school you have completed?",
-        "response_type" : "radio",
-        "options" : ["No formal education", "Nursery school to 8th grade", "Some high school, no diploma", "High school graduate, diploma or the equivalent", "Some college credit, no degree", "Trade, technical, or vocational training", "Associate's degree", "Bachelor's degree", "Master's degree", "Professional degree", "Doctorate degree", "Prefer not to answer"],
-    },
-
-    "q62" : {
-        "question" : "What is your employment status?",
-        "response_type" : "radio",
-        "options" : ["Student", "Full-time employed", "Part-time employed", "Not employed", "Retired", "Prefer not to answer"],
-    },
-
-    "q63" : {
-        "question" : "Are you majoring in or do you have a degree or job in computer science, computer engineering, information technology, or a related field?",
-        "response_type" : "radio",
-        "options" : ["Yes", "No", "Prefer not to answer"],
-    },
-}
+GENERAL_SURVEY_OUTPUT = "output.csv"
+TOTAL_GENERAL_QS = 63
 
 
 def hash_users():
     for i, user in enumerate(user_list):
         hash_val = hash_fn(str(i).encode()).hexdigest()
         hash_val = hash_val[:8]
-        users[hash_val] = user
+        users[hash_val] = User(name=user)
 
-        
+
 def parselink(linkstring):
     arr = linkstring.split('/')
-    
+
     return arr[-2]
+
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'C2HWGVoMGfNTBsrYQg8EcMrdTimkZfAb'
@@ -432,36 +61,17 @@ def hello_world():
 def varfunc(name):
     return 'Hello %s, Adios !' % name
 
-@app.route("/gateway/<name>", methods = ['GET', 'POST'])
-def inbetween(name):
+
+@app.route("/gateway/<id>", methods=['GET', 'POST'])
+def inbetween(id):
     if request.method == 'POST':
         data = request.form["Question"]
         file_id = parselink(data)
         download_file_from_google_drive(file_id, "zips/"+file_id+".zip")
-        redirect(url_for('inbetween', name = "abc")) #,drivelink = data, id = parselink(data)))
-        indices, trans = generate_qs(file_id)
-        final_qs = {}
-        
-        ctr = 0 
-        
-        for ind in range(0,len(indices)):
-            if(trans[ind] == ""):
-                continue
-            question_set = func([indices[ind]])
-            questions_formatted = generate_q_list(question_set, trans[ind])
-
-            for key, val in questions_formatted.items():
-
-                new_key = "q-" + str(indices[ind]) + "-" + key[1:]
-                final_qs[new_key] = val
-
-        for key,val in final_qs.items():
-            print(key)
-            print(val)
-            print("*************************************************\n")   
-
-       # redirect(url_for('specific survey', params = final_qs)) #, id = id)) 
-        
+        users[id].file_id = file_id
+        return redirect(url_for('survey3', id=id))
+    # redirect(url_for('specific survey', params = final_qs)) #, id = id))
+    return render_template("guide.html")
    # return render_template('guide.html', ) #, first_sentence = "This is meant to be a guide for %s made by pranav\n" % name)
 
 
@@ -469,9 +79,10 @@ def inbetween(name):
 def varfun2(name):
     return "Hope to see you soon %s !" % name
 
+
 @app.route('/survey/<id>', methods=['GET', 'POST'])
 def index(id):
-    name = users[id]
+    name = users[id].name
     form = ConsentForm()
     if request.method == 'POST':
         if form.is_submitted():
@@ -482,30 +93,73 @@ def index(id):
     return render_template('consent_form.html', form=form, name=name)
 
 
+user_choices = {}
+
+
 @app.route("/survey2/<id>", methods=['GET', 'POST'])
 def survey2(id):
-    if (request.method == 'POST'):
-        return redirect(url_for('inbetween', name=users[id]))
     form, fields = create_form(questions=questions)
+    if (request.method == 'POST') and form.is_submitted():
+        print(form.data)
+        form_data = []
+        for field in fields:
+            if (isinstance(form[field], MCQ)):
+                val = ""
+                for i in range(len(form[field].choices)):
+                    if i+1 in form[field].data:
+                        val += "1"
+                    else:
+                        val += "0"
+                form_data.append(val)
+            else:
+                form_data.append(form[field].data)
+
+        with open("output.csv", "a") as f:
+            writer = csv.writer(f)
+            writer.writerow(form_data)
+        return redirect(url_for('inbetween', id=id))
+    for field in fields:
+        if (isinstance(form[field], MCQ)):
+            form[field].data = []
     return render_template('survey2.html', form=form, questions=fields)
 
 
-@app.route("/survey3/<id>", methods = ['GET', 'POST'])
-def specific_survey(params):
-    name = users[id]
-    #specific_survey_questions = generate_q_list()
+@ app.route("/survey3/<id>", methods=['GET', 'POST'])
+def survey3(id):
+    name = users[id].name
+    file_id = users[id].file_id
+    print(file_id)
+    indices, trans = generate_qs(file_id)
     specific_survey_questions = {}
+
+    for ind in range(0, len(indices)):
+        if (trans[ind] == ""):
+            continue
+        question_set = func([indices[ind]])
+        questions_formatted = generate_q_list(question_set, trans[ind])
+        for key, val in questions_formatted.items():
+            new_key = "q-" + str(indices[ind]) + "-" + key[1:]
+            specific_survey_questions[new_key] = val
+
+    for key, val in specific_survey_questions.items():
+        print(key)
+        print(val)
+        print("*************************************************\n")
+
+    form, fields = create_form(questions=specific_survey_questions)
     if (request.method == 'POST'):
-            return redirect(url_for('varfunc2',name = name))
-    form, fields = create_form(questions = specific_survey_questions)
-
-    
-
+        # put form data into csv
+        return redirect(url_for('varfunc2', name=name))
     return render_template('specific_survey.html', form=form, name=fields)
-
 
 
 if __name__ == '__main__':
     hash_users()
     print(users)
+    with open(GENERAL_SURVEY_OUTPUT, 'w') as csvfile:
+        fieldnames = ["Name"]
+        for i in range(TOTAL_GENERAL_QS):
+            fieldnames.append("Q" + str(i + 1))
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer.writeheader()
     app.run(debug=True)
