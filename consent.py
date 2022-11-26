@@ -5,11 +5,12 @@ from wtforms import StringField, SubmitField, BooleanField, RadioField, IntegerF
 from wtforms.validators import DataRequired
 from wtforms import widgets
 
-    
+
 class ConsentForm(FlaskForm):
     accept = RadioField("Please indicate consent before proceeding", choices=[
                         ('Yes', 'I consent'), ('No', 'I do not consent')], validators=[DataRequired()])
     submit = SubmitField('Submit')
+
 
 class MCQ(SelectMultipleField):
     widget = widgets.ListWidget(prefix_label=False)
@@ -18,6 +19,7 @@ class MCQ(SelectMultipleField):
 
 def create_form(questions):
     fields = []
+
     class SurveyForm(FlaskForm):
         pass
 
@@ -32,8 +34,10 @@ def create_form(questions):
             setattr(SurveyForm, key, RadioField(
                 value["question"], choices=value["options"], validators=[DataRequired()]))
         elif value["response_type"] == "checkbox":
+            choices = [(option_id, option)
+                       for (option_id, option) in enumerate(value["options"])]
             setattr(SurveyForm, key, MCQ(
-                value["question"], choices=value["options"], validators=[DataRequired()]))
+                value["question"], choices=choices, coerce=int))
         fields.append(key)
     setattr(SurveyForm, "submit", SubmitField('Submit'))
     fields.append("submit")
