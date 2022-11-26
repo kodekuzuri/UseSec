@@ -163,8 +163,8 @@ def survey3(id):
         if (field.split("-")[2] != "00"):
             indices[field] = ctr
             ctr += 1
-            
-    if (request.method == "POST") and form.validate():
+
+    if (request.method == "POST") and form.is_submitted():
         form_data = []
         for field in fields:
             if (field == "submit"):
@@ -180,8 +180,9 @@ def survey3(id):
                 if key.split("-")[2] == "00":
                     continue
                 ques = ""
-                # ques = "q: " + values["question"] + " # receiver = " + values["receiver"] + " # transmission_principle = " + values["transmission_principle"] + " # attribute = " + values["attribute"]
-                ques = "q: " + values["question"] + " # transmission_principle = " + values["transmission_principle"] + " # attribute = " + values["attribute"][5]
+                ques = "q: " + values["question"] + " # transmission_principle = " + \
+                    values["transmission_principle"] + \
+                    " # attribute = " + values["attribute"][5]
                 ques_list.append(ques)
             writer = csv.writer(f)
             writer.writerow(ques_list)
