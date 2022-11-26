@@ -17,12 +17,6 @@ from flask_login import current_user
 users = {}
 
 
-class User():
-    def __init__(self, name=None, file_id=None):
-        self.name = None
-        self.file_id = None
-
-
 user_list = ['Parth Jindal', 'Neha Dalmia', 'Suhas Jain',
              'Pranav Rajput', 'Rajat Bachawat', 'Animesh Jha']
 
@@ -34,7 +28,9 @@ def hash_users():
     for i, user in enumerate(user_list):
         hash_val = hash_fn(str(i).encode()).hexdigest()
         hash_val = hash_val[:8]
-        users[hash_val] = User(name=user)
+        users[hash_val] = {
+            "name": user,
+        }
 
 
 def parselink(linkstring):
@@ -69,7 +65,7 @@ def inbetween(id):
         data = request.form["Question"]
         file_id = parselink(data)
         download_file_from_google_drive(file_id, "zips/"+file_id+".zip")
-        users[id].file_id = file_id
+        users[id]["file_id"] = file_id
         return redirect(url_for('survey3', id=id))
     # redirect(url_for('specific survey', params = final_qs)) #, id = id))
     return render_template("guide.html")
@@ -83,7 +79,7 @@ def varfun2(name):
 
 @app.route('/survey/<id>', methods=['GET', 'POST'])
 def index(id):
-    name = users[id].name
+    name = users[id]["name"]
     form = ConsentForm()
     if request.method == 'POST':
         if form.is_submitted():
@@ -127,8 +123,9 @@ def survey2(id):
 
 @ app.route("/survey3/<id>", methods=['GET', 'POST'])
 def survey3(id):
-    name = users[id].name
-    file_id = users[id].file_id
+    name = users[id]["name"]
+    file_id = users[id]["file_id"]
+
     print(file_id)
     indices, trans = generate_qs(file_id)
     specific_survey_questions = {}
@@ -148,10 +145,11 @@ def survey3(id):
         print("*************************************************\n")
 
     form, fields = create_form(questions=specific_survey_questions)
+    print(fields)
     if (request.method == 'POST'):
         # put form data into csv
         return redirect(url_for('varfunc2', name=name))
-    return render_template('specific_survey.html', form=form, name=fields)
+    return render_template('specific_survey.html', form=form, questions=fields)
 
 
 if __name__ == '__main__':
