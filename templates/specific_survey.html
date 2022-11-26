@@ -14,15 +14,22 @@
 <form method="POST">
     <div class="container">
         <div class="row">
-            <div class="col-md-15 col-lg-10 mx-lg-auto mx-md-auto">
+            <div class="col-md-15 col-lg-11 mx-lg-auto mx-md-auto">
 
                 <h1 class="pt-5 pb-2">Specific Survey</h1>
 
-                <p class="lead">Hello Brother</p>
 
                 {% for question in questions %}
+                {% if "{}".format(question).split('-')[2] == "00" %}
+                <h2 class="pt-3 pb-2">
+                    Transaction Details
+                </h2>
+                <h5>
+                    {{ form[question].label }}
+                </h5>
+                {% else %}
                 {% if question != "submit" %}
-                <h3 class="pt-3 pb-2">Question {{ loop.index }}</h3>
+                <h3 class="pt-3 pb-2">Question {{ indices[question] }}</h3>
                 {{ form[question].label }}
                 {% endif %}
                 {% if "{}".format(question).find("radio") > -1 %}
@@ -42,6 +49,7 @@
                     {{ error }}
                     {% endfor %}
                 </div>
+                {% endif %}
                 {% endif %}
                 {% endfor %}
             </div>

@@ -26,11 +26,14 @@ def generate_q_list(list_of_q, trans):
             "options" : ["Very Uncomfortable", "Uncomfortable", "Neutral", "Comfortable", "Very Comfortable"],
             "receiver" : q[1],
             "transmission_principle": q[2],
-            "attribute" : trans[5],
+            "attribute" : trans,
         }
 
         questions[q_name] = new_q_entry
-
+    # for key,val in questions.items():
+    #     print(val)
+    #     print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n")
+    # #print(questions)
     return questions
 
 

@@ -4,7 +4,7 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, BooleanField, RadioField, IntegerField, FormField, FieldList, SelectField, SelectMultipleField
 from wtforms.validators import DataRequired
 from wtforms import widgets
-
+from collections import OrderedDict
 
 class ConsentForm(FlaskForm):
     accept = RadioField("Please indicate consent before proceeding", choices=[
@@ -22,8 +22,8 @@ def create_form(questions):
 
     class SurveyForm(FlaskForm):
         pass
-
-    for key, value in questions.items():
+    questions = OrderedDict(sorted(questions.items()))
+    for key,value in questions.items():
         if value["response_type"] == "text":
             setattr(SurveyForm, key, StringField(
                 value["question"], validators=[DataRequired()]))

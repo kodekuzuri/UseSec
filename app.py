@@ -13,6 +13,8 @@ from generator import *
 from specific_survey import *
 import csv
 from flask_login import current_user
+from collections import OrderedDict
+from copy import deepcopy
 
 users = {}
 
@@ -126,30 +128,50 @@ def survey3(id):
     name = users[id]["name"]
     file_id = users[id]["file_id"]
 
-    print(file_id)
     indices, trans = generate_qs(file_id)
     specific_survey_questions = {}
 
     for ind in range(0, len(indices)):
-        if (trans[ind] == ""):
+        if (trans[indices[ind]] == ""):
             continue
         question_set = func([indices[ind]])
-        questions_formatted = generate_q_list(question_set, trans[ind])
+        questions_formatted = generate_q_list(
+            question_set, trans[indices[ind]])
         for key, val in questions_formatted.items():
-            new_key = "q-" + str(indices[ind]) + "-" + key[1:]
+            new_key = "q-" + str(indices[ind]) + "-" + str(key[1:]).zfill(2)
             specific_survey_questions[new_key] = val
 
-    for key, val in specific_survey_questions.items():
-        print(key)
-        print(val)
-        print("*************************************************\n")
+    for i in range(0, 11):
+        key = "q-" + str(i) + "-01"
+        check_val = specific_survey_questions.get(key)
+        if (check_val is not None):
+            new_key = "q-" + str(i) + "-00"
+            specific_survey_questions[new_key] = deepcopy(
+                specific_survey_questions[key])
+            data_entry = specific_survey_questions[key]["attribute"]
+            specific_survey_questions[new_key]["question"] = "Amount: {}, Paid to: {}, Date and Time: {}".format(
+                data_entry[1], data_entry[2], data_entry[4])
+            specific_survey_questions[new_key]["response_type"] = "text"
 
     form, fields = create_form(questions=specific_survey_questions)
-    print(fields)
+    indices = {}
+    ctr = 1
+    for field in fields:
+        if field == "submit":
+            continue
+        if (field.split("-")[2] != "00"):
+            indices[field] = ctr
+            ctr += 1
+
     if (request.method == 'POST'):
-        # put form data into csv
+        form_data = []
+        for field in fields:
+            form_data.append(form[field].data)
+        with open("output2.csv", "a") as f:
+            writer = csv.writer(f)
+            writer.writerow(form_data)
         return redirect(url_for('varfunc2', name=name))
-    return render_template('specific_survey.html', form=form, questions=fields)
+    return render_template('specific_survey.html', form=form, questions=fields, indices=indices)
 
 
 if __name__ == '__main__':
