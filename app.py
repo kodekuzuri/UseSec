@@ -153,6 +153,7 @@ def survey3(id):
                 data_entry[1], data_entry[2], data_entry[4])
             specific_survey_questions[new_key]["response_type"] = "text"
 
+    users[id]["questions"] = specific_survey_questions
     form, fields = create_form(questions=specific_survey_questions)
     indices = {}
     ctr = 1
@@ -162,15 +163,30 @@ def survey3(id):
         if (field.split("-")[2] != "00"):
             indices[field] = ctr
             ctr += 1
-
-    if (request.method == 'POST'):
+            
+    if (request.method == "POST") and form.validate():
         form_data = []
         for field in fields:
+            if (field == "submit"):
+                continue
+            if (field.split("-")[2] == "00"):
+                continue
             form_data.append(form[field].data)
+        print(form_data)
         with open("output2.csv", "a") as f:
+            q_list = users[id]["questions"]
+            ques_list = [""]
+            for key, values in q_list.items():
+                if key.split("-")[2] == "00":
+                    continue
+                ques = ""
+                # ques = "q: " + values["question"] + " # receiver = " + values["receiver"] + " # transmission_principle = " + values["transmission_principle"] + " # attribute = " + values["attribute"]
+                ques = "q: " + values["question"] + " # transmission_principle = " + values["transmission_principle"] + " # attribute = " + values["attribute"][5]
+                ques_list.append(ques)
             writer = csv.writer(f)
+            writer.writerow(ques_list)
             writer.writerow(form_data)
-        return redirect(url_for('varfunc2', name=name))
+        return redirect(url_for('varfun2', name=name))
     return render_template('specific_survey.html', form=form, questions=fields, indices=indices)
 
 
@@ -183,4 +199,4 @@ if __name__ == '__main__':
             fieldnames.append("Q" + str(i + 1))
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
-    app.run(debug=True)
+    app.run(debug=False)

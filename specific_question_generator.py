@@ -66,7 +66,7 @@ def generate_qs(user_id):
             present.append(2)
 
     size_of_available_categories = len(present)
-    indices = random.sample(range(0, size_of_available_categories), 4)
+    indices = random.sample(range(0, size_of_available_categories), 1)
 
     return_present_list = []
     return_final_trans = {}
